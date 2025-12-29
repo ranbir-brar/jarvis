@@ -23,3 +23,6 @@ chromadb>=0.4.0
 
 # Utilities
 python-dotenv>=1.0.0
+
+# Keyboard monitoring
+pynput>=1.7.6
