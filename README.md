@@ -6,7 +6,7 @@ Jarvis watches your clipboard and responds to voice commands to transform, analy
 
 ## Features
 
-- **Push-to-Talk** — Hold `fn` key to speak, release to process
+- **Push-to-Talk** — Hold `Right Command` key to speak, release to process (configurable)
 - **Screenshot to Code** — Copy a UI screenshot, say "make this React", get production-ready code
 - **Data Structuring** — Transform messy text to JSON, CSV, SQL, or Markdown tables
 - **Code Debugging** — Copy a stack trace or buggy code, say "fix this"
@@ -66,10 +66,12 @@ On first run, you may need to grant permissions:
 
 **Push-to-Talk:**
 
-1. Hold the `fn` key → 🎤 Recording starts
+1. Hold the activation key (default: `Right Command`) → 🎤 Recording starts
 2. Speak your command
-3. Release `fn` → ⏹️ Command is processed
+3. Release key → ⏹️ Command is processed
 4. Result is copied to clipboard + notification shown
+
+> **Note on 'fn' key**: The Fn key cannot be detected by Python on macOS. Please use `cmd_r`, `ctrl`, `alt`, or `shift` instead.
 
 ### Voice Commands
 
@@ -87,32 +89,13 @@ On first run, you may need to grant permissions:
 
 ## Configuration Options
 
-| Variable         | Default | Description                                                    |
-| ---------------- | ------- | -------------------------------------------------------------- |
-| `MODEL_PROVIDER` | `groq`  | LLM provider: `groq` or `gemini`                               |
-| `GROQ_API_KEY`   | -       | Your Groq API key                                              |
-| `GEMINI_API_KEY` | -       | Your Gemini API key (if using Gemini)                          |
-| `ACTIVATION_KEY` | `fn`    | Push-to-talk key: `fn`, `ctrl`, `alt`, `cmd`, `shift`, `space` |
-| `ENABLE_MEMORY`  | `false` | Enable semantic memory                                         |
-
-## Project Structure
-
-```
-jarvis/
-├── run.py               # Entry point - run this!
-├── app/
-│   ├── main.py          # Main orchestrator
-│   ├── clipboard.py     # macOS clipboard monitor
-│   ├── config.py        # Configuration
-│   ├── notify.py        # macOS notifications
-│   ├── llm/             # LLM layer (Groq/Gemini)
-│   ├── actions/         # Action handlers
-│   ├── voice/           # Voice pipeline + push-to-talk
-│   └── memory/          # ChromaDB semantic memory
-├── requirements.txt
-├── .env.example
-└── README.md
-```
+| Variable         | Default | Description                                       |
+| ---------------- | ------- | ------------------------------------------------- |
+| `MODEL_PROVIDER` | `groq`  | LLM provider: `groq` or `gemini`                  |
+| `GROQ_API_KEY`   | -       | Your Groq API key                                 |
+| `GEMINI_API_KEY` | -       | Your Gemini API key (if using Gemini)             |
+| `ACTIVATION_KEY` | `cmd_r` | Push-to-talk key: `cmd_r`, `ctrl`, `alt`, `shift` |
+| `ENABLE_MEMORY`  | `false` | Enable semantic memory                            |
 
 ## Troubleshooting
 
@@ -124,7 +107,7 @@ Make sure you run with `python run.py` from the jarvis directory.
 
 Check System Settings → Privacy & Security → Microphone.
 
-### Keyboard (fn key) not detected
+### Keyboard not working
 
 Grant Accessibility permission to your terminal: System Settings → Privacy & Security → Accessibility.
 

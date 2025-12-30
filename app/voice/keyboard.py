@@ -43,7 +43,7 @@ class PushToTalk:
         
         # Map key names to pynput keys
         self._key_map = {
-            "fn": keyboard.Key.fn,
+            # "fn": keyboard.Key.fn, # Not available in pynput
             "ctrl": keyboard.Key.ctrl,
             "alt": keyboard.Key.alt,
             "cmd": keyboard.Key.cmd,
@@ -56,7 +56,15 @@ class PushToTalk:
     
     def _get_activation_key(self):
         """Get the pynput key object for the activation key."""
-        return self._key_map.get(self.activation_key.lower(), keyboard.Key.fn)
+        key_name = self.activation_key.lower()
+        
+        if key_name == "fn":
+            print("⚠️  Note: The 'fn' key cannot be detected by Python on macOS.")
+            print("⚠️  Falling back to Right Command (cmd_r).")
+            print("⚠️  To fix: Edit .env and set ACTIVATION_KEY=cmd_r (or ctrl, alt, shift)")
+            return keyboard.Key.cmd_r
+            
+        return self._key_map.get(key_name, keyboard.Key.cmd_r)
     
     def _on_press(self, key):
         """Handle key press."""
