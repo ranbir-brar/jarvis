@@ -32,7 +32,7 @@ class Config:
     
     # Voice Settings
     WAKEWORD: str = os.getenv("JARVIS_WAKEWORD", "jarvis")
-    ACTIVATION_KEY: str = os.getenv("ACTIVATION_KEY", "cmd+shift+j")  # Hotkey like cmd+shift+j or single key like f5
+    ACTIVATION_KEY: str = os.getenv("ACTIVATION_KEY", "fn")  # fn, cmd+shift+j, etc.
     
     # UI Settings
     NOTIFICATION_TITLE: str = os.getenv("NOTIFICATION_TITLE", "Jarvis")
