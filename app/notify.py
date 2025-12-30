@@ -5,9 +5,14 @@ Provides simple notification functionality for Jarvis.
 
 import subprocess
 import shutil
+import os
 from typing import Optional
+from pathlib import Path
 
 from app.config import config
+
+# Path to Jarvis logo for notifications
+JARVIS_LOGO = Path(__file__).parent.parent / "public" / "jarvis_logo.jpg"
 
 
 def is_terminal_notifier_available() -> bool:
@@ -43,6 +48,9 @@ def notify(
             "-title", title or config.NOTIFICATION_TITLE,
             "-message", message,
         ]
+        
+        if JARVIS_LOGO.exists():
+            cmd.extend(["-appIcon", str(JARVIS_LOGO)])
         
         if subtitle:
             cmd.extend(["-subtitle", subtitle])
