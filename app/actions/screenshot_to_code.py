@@ -3,21 +3,20 @@ Screenshot to code action for Jarvis.
 Converts UI screenshots to code using vision models.
 """
 
-import base64
 import io
 from typing import Optional
 from PIL import Image
 
-from app.llm.providers import llm_client
 from app.llm.prompts import SCREENSHOT_TO_CODE_PROMPT
 from app.llm.schemas import VisionCodeResponse
+from app.config import config
 
 
-def image_to_base64(image: Image.Image) -> str:
-    """Convert PIL Image to base64 string."""
+def image_to_bytes(image: Image.Image) -> bytes:
+    """Convert PIL Image to PNG bytes."""
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
-    return base64.b64encode(buffer.getvalue()).decode("utf-8")
+    return buffer.getvalue()
 
 
 def screenshot_to_code(
@@ -37,41 +36,40 @@ def screenshot_to_code(
         Generated code string, or None on failure
     """
     try:
-        # Convert image to base64
-        image_b64 = image_to_base64(image)
+        import google.genai as genai
+        from google.genai import types
         
-        # Build the prompt
+        client = genai.Client(api_key=config.GEMINI_API_KEY)
+        
+        image_bytes = image_to_bytes(image)
+        
         prompt = SCREENSHOT_TO_CODE_PROMPT.format(
             target=target,
             component_name=component_name
         )
         
-        # Build messages with image
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": prompt
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/png;base64,{image_b64}"
-                        }
-                    }
-                ]
-            }
-        ]
-        
-        # Use vision client
-        response = llm_client.vision_chat(
-            messages=messages,
-            response_model=VisionCodeResponse
+        response = client.models.generate_content(
+            model=config.GEMINI_MODEL,
+            contents=[
+                types.Part.from_bytes(
+                    data=image_bytes,
+                    mime_type='image/png',
+                ),
+                prompt
+            ]
         )
         
-        return response.code
+        code = response.text
+        
+        if code.startswith("```"):
+            lines = code.split("\n")
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].strip() == "```":
+                lines = lines[:-1]
+            code = "\n".join(lines)
+        
+        return code
         
     except Exception as e:
         print(f"Error in screenshot_to_code: {e}")

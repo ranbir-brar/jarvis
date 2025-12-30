@@ -40,20 +40,30 @@ USER COMMAND: {command}
 """
 
 
-SCREENSHOT_TO_CODE_PROMPT = """Convert this UI screenshot to clean, production-ready code.
+SCREENSHOT_TO_CODE_PROMPT = """Convert this UI screenshot to clean, production-ready JSX code.
 
 TARGET FRAMEWORK: {target}
 
 RULES:
-1. Output ONLY the code - no explanations, no markdown fences
-2. Use semantic HTML elements (header, nav, main, button, etc.)
-3. For React: Use functional components with TypeScript
-4. For Tailwind: Use utility classes, no custom CSS
+1. Output ONLY the JSX elements - no imports, no function wrapper, no exports
+2. The output should be a drop-in snippet that fits inside an existing component like:
+   <div className="container">
+     <!-- YOUR OUTPUT GOES HERE -->
+   </div>
+3. Use Tailwind CSS utility classes for all styling
+4. Use semantic HTML elements (header, nav, main, button, etc.)
 5. Add accessibility attributes (aria-labels, button types)
 6. Use reasonable defaults for colors and spacing
 7. Make it responsive where sensible
+8. NO markdown fences, NO explanations, JUST the JSX
 
-Component name: {component_name}
+Example output format:
+<div className="bg-white rounded-lg shadow-md p-6">
+  <h2 className="text-xl font-bold mb-4">Title</h2>
+  <p className="text-gray-600">Content here</p>
+</div>
+
+Component name hint: {component_name}
 """
 
 

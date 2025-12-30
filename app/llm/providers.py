@@ -22,7 +22,7 @@ def get_gemini_client() -> Any:
     import google.genai as genai
     
     client = genai.Client(api_key=config.GEMINI_API_KEY)
-    return instructor.from_genai(client, mode=instructor.Mode.JSON)
+    return instructor.from_genai(client, mode=instructor.Mode.GENAI_TOOLS)
 
 
 def get_llm_client() -> Any:

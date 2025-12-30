@@ -118,7 +118,6 @@ class Jarvis:
         self.processing = True
         
         try:
-        try:
             wav_data = self._to_wav(audio_data)
             
             transcript = transcribe_audio(wav_data)
