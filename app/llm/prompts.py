@@ -40,28 +40,30 @@ USER COMMAND: {command}
 """
 
 
-SCREENSHOT_TO_CODE_PROMPT = """Convert this UI screenshot to clean, production-ready JSX code.
+SCREENSHOT_TO_CODE_PROMPT = """Convert this UI screenshot to pixel-perfect, production-ready JSX code.
 
 TARGET FRAMEWORK: {target}
 
-RULES:
+CRITICAL RULES:
 1. Output ONLY the JSX elements - no imports, no function wrapper, no exports
-2. The output should be a drop-in snippet that fits inside an existing component like:
-   <div className="container">
-     <!-- YOUR OUTPUT GOES HERE -->
-   </div>
-3. Use Tailwind CSS utility classes for all styling
-4. Use semantic HTML elements (header, nav, main, button, etc.)
-5. Add accessibility attributes (aria-labels, button types)
-6. Use reasonable defaults for colors and spacing
-7. Make it responsive where sensible
-8. NO markdown fences, NO explanations, JUST the JSX
+2. The output should be a drop-in snippet for an existing React component
+3. Match the EXACT visual design:
+   - Copy exact colors (use specific hex codes or Tailwind colors that match)
+   - Match border radius exactly (rounded-lg, rounded-xl, rounded-2xl, etc.)
+   - Match shadows (shadow-sm, shadow-md, shadow-lg, shadow-xl)
+   - Match spacing precisely (padding, margins, gaps)
+   - Match typography (font sizes, weights, colors)
+4. Use Tailwind CSS utility classes for all styling
+5. For gradients, use bg-gradient-to-r, bg-gradient-to-br, etc.
+6. Include focus states for interactive elements
+7. NO markdown fences, NO explanations, JUST the JSX
 
-Example output format:
-<div className="bg-white rounded-lg shadow-md p-6">
-  <h2 className="text-xl font-bold mb-4">Title</h2>
-  <p className="text-gray-600">Content here</p>
-</div>
+Be extremely precise with:
+- Button colors and gradients
+- Input field border colors on focus (often purple/indigo)
+- Checkbox styling
+- Link colors
+- Background gradients (look for subtle gradients in corners)
 
 Component name hint: {component_name}
 """
