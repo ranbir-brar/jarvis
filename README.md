@@ -8,24 +8,24 @@ Jarvis watches your clipboard and responds to voice commands to transform, analy
 
 Jarvis understands your intent and the content on your clipboard (text or image) to perform the following:
 
-### 🎨 Design & Code
+### Design & Code
 
 - **Screenshot to Code**: Copy a UI screenshot → "Jarvis, make this React" → Generates production-ready code.
 - **Debug Code**: Copy a stack trace or buggy code → "Jarvis, fix this" → Explains and fixes the bug.
 - **Background Removal**: Copy an image → "Jarvis, remove background" → Updates clipboard with transparent PNG.
 
-### 📝 Text & Data
+### Text & Data
 
 - **Rewrite & Polish**: Copy rough notes → "Jarvis, make professional" → Rewrites text to be clear and polished.
 - **Translate**: Copy text → "Jarvis, translate to Spanish" → Detects language and translates.
 - **Structure Data**: Copy messy text → "Make this JSON" / "Convert to CSV" → Returns structured data.
 
-### 🧠 Memory
+### Memory
 
 - **Semantic Memory**: "Jarvis, remember my API key is 123" → Saves to local database.
 - **Recall**: "Jarvis, what is my API key?" → Searches memory and retrieves answer.
 
-### 🛠️ Utilities
+### Utilities
 
 - **Quick Tools**: "Trim whitespace", "Dedupe lines", "Extract emails", "Extract URLs", "Prettify JSON", "Slugify".
 
