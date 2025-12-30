@@ -43,10 +43,11 @@ USER COMMAND: {command}
 SCREENSHOT_TO_CODE_PROMPT = """Convert this UI screenshot to a pixel-perfect React component.
 
 TARGET FRAMEWORK: {target}
+COMPONENT NAME: {component_name}
 
 CRITICAL OUTPUT RULES:
 1. Output the component EXACTLY ONCE - do not repeat or duplicate
-2. The component MUST be named "Component" and exported as default
+2. The component MUST be named "{component_name}" and exported as default
 3. Do NOT use external icon libraries - use inline SVGs for all icons
 4. Do NOT include background/container wrapping - just the component itself
 
@@ -54,7 +55,7 @@ FILE STRUCTURE (exactly this):
 ```
 import React from 'react';
 
-export default function Component() {{
+export default function {component_name}() {{
   return (
     // Your JSX here
   );

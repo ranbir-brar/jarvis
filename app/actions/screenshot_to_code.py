@@ -44,7 +44,8 @@ def screenshot_to_code(
         image_bytes = image_to_bytes(image)
         
         prompt = SCREENSHOT_TO_CODE_PROMPT.format(
-            target=target
+            target=target,
+            component_name=component_name
         )
         
         response = client.models.generate_content(
