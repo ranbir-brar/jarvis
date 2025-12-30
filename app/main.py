@@ -88,7 +88,8 @@ class Jarvis:
             self.audio_frames = []
             self.recording = True
         
-        print("🎤 Listening...")
+        # Print with flush to ensure immediate visibility
+        print("\r🎤 Listening...            ", end="", flush=True)
     
     def _stop_recording(self):
         """Called when activation key is released."""
@@ -100,7 +101,8 @@ class Jarvis:
             audio_data = b''.join(self.audio_frames)
             self.audio_frames = []
         
-        print("⏹️  Processing...")
+        print("\r⏹️  Processing...          ", end="", flush=True)
+        print() # New line
         
         if len(audio_data) < 3200:  # Less than 0.1 seconds
             print("Recording too short, ignoring")
@@ -131,7 +133,7 @@ class Jarvis:
                 notify_info("Didn't catch that")
                 return
             
-            print(f"Heard: {transcript}")
+            print(f"📝 Heard: '{transcript}'")
             command = transcript.strip()
             
             # Check for stop command
@@ -178,7 +180,7 @@ class Jarvis:
             notify_error("Processing error")
         finally:
             self.processing = False
-    
+
     def _to_wav(self, audio_data: bytes) -> bytes:
         """Convert raw PCM audio to WAV format."""
         buffer = io.BytesIO()
@@ -203,17 +205,18 @@ class Jarvis:
         
         print(f"\nProvider: {config.MODEL_PROVIDER}")
         print(f"Memory: {'Enabled' if config.ENABLE_MEMORY else 'Disabled'}")
-        key_name = config.ACTIVATION_KEY
-        if key_name == "cmd_r":
-            key_name = "Right Command"
         
-        print(f"\n📌 Hold [{key_name}] key to speak, release to process")
+        # Get standardized key name
+        key_code = config.ACTIVATION_KEY
+        key_display = "Right Command" if key_code == "cmd_r" else key_code
+        
+        print(f"\n📌 Hold [{key_display}] key to speak, release to process")
         print("Say 'stop' to exit.\n")
         
         self.running = True
         
         # Show startup notification
-        notify_success(f"Jarvis ready! Hold {key_name} to speak")
+        notify_success(f"Jarvis ready! Hold {key_display} to speak")
         
         try:
             # Start keyboard listener
@@ -241,7 +244,7 @@ class Jarvis:
             notify_error(f"Error: {str(e)[:30]}")
         finally:
             self.stop()
-    
+
     def stop(self):
         """Stop Jarvis."""
         self.running = False
@@ -268,8 +271,8 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
     
-    # Parse activation key from args
-    activation_key = "fn"
+    # Parse activation key from args or config
+    activation_key = config.ACTIVATION_KEY
     if len(sys.argv) > 1:
         activation_key = sys.argv[1]
     
