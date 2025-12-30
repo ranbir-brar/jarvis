@@ -203,13 +203,17 @@ class Jarvis:
         
         print(f"\nProvider: {config.MODEL_PROVIDER}")
         print(f"Memory: {'Enabled' if config.ENABLE_MEMORY else 'Disabled'}")
-        print(f"\n📌 Hold [fn] key to speak, release to process")
+        key_name = config.ACTIVATION_KEY
+        if key_name == "cmd_r":
+            key_name = "Right Command"
+        
+        print(f"\n📌 Hold [{key_name}] key to speak, release to process")
         print("Say 'stop' to exit.\n")
         
         self.running = True
         
         # Show startup notification
-        notify_success("Jarvis ready! Hold fn to speak")
+        notify_success(f"Jarvis ready! Hold {key_name} to speak")
         
         try:
             # Start keyboard listener
