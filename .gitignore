@@ -68,5 +68,6 @@ htmlcov/
 *.wav
 *.mp3
 
-# pyinstaller
-*.spec
+# pyinstaller build artifacts
+build/
+dist/
