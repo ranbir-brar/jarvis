@@ -1,17 +1,110 @@
 """
 Keyboard listener for push-to-talk activation.
-Supports both single keys and hotkey combinations.
+Supports hotkey combinations and the special Fn key on macOS.
 """
 
 import threading
 from typing import Callable, Optional, Set
 from pynput import keyboard
 
+# Try to import Quartz for Fn key detection on macOS
+try:
+    import Quartz
+    HAS_QUARTZ = True
+except ImportError:
+    HAS_QUARTZ = False
+
+
+class FnKeyDetector:
+    """
+    Detects the Fn key on macOS using Quartz event tap.
+    The Fn key is not visible to normal keyboard libraries.
+    """
+    
+    def __init__(
+        self,
+        on_activate: Optional[Callable[[], None]] = None,
+        on_deactivate: Optional[Callable[[], None]] = None
+    ):
+        self.on_activate = on_activate
+        self.on_deactivate = on_deactivate
+        self.is_active = False
+        self._running = False
+        self._thread = None
+    
+    def _event_callback(self, proxy, event_type, event, refcon):
+        """Callback for Quartz event tap."""
+        # Get current modifier flags
+        flags = Quartz.CGEventGetFlags(event)
+        
+        # Check for Fn key (flag 0x800000 = 8388608)
+        fn_pressed = bool(flags & 0x800000)
+        
+        if fn_pressed and not self.is_active:
+            self.is_active = True
+            if self.on_activate:
+                self.on_activate()
+        elif not fn_pressed and self.is_active:
+            self.is_active = False
+            if self.on_deactivate:
+                self.on_deactivate()
+        
+        return event
+    
+    def _run_loop(self):
+        """Run the event loop in a background thread."""
+        # Create event tap for flagsChanged events (modifier keys)
+        tap = Quartz.CGEventTapCreate(
+            Quartz.kCGSessionEventTap,
+            Quartz.kCGHeadInsertEventTap,
+            Quartz.kCGEventTapOptionListenOnly,
+            Quartz.CGEventMaskBit(Quartz.kCGEventFlagsChanged),
+            self._event_callback,
+            None
+        )
+        
+        if tap is None:
+            print("⚠️  Failed to create event tap. Try granting Accessibility permission.")
+            return
+        
+        # Create run loop source
+        run_loop_source = Quartz.CFMachPortCreateRunLoopSource(None, tap, 0)
+        Quartz.CFRunLoopAddSource(
+            Quartz.CFRunLoopGetCurrent(),
+            run_loop_source,
+            Quartz.kCFRunLoopCommonModes
+        )
+        
+        # Enable the tap
+        Quartz.CGEventTapEnable(tap, True)
+        
+        print("Push-to-talk: Hold [FN] to speak")
+        
+        # Run the loop
+        while self._running:
+            Quartz.CFRunLoopRunInMode(Quartz.kCFRunLoopDefaultMode, 0.1, False)
+    
+    def start(self):
+        """Start listening for Fn key."""
+        if not HAS_QUARTZ:
+            print("⚠️  Quartz not available, Fn key detection won't work")
+            return
+        
+        self._running = True
+        self._thread = threading.Thread(target=self._run_loop, daemon=True)
+        self._thread.start()
+    
+    def stop(self):
+        """Stop listening."""
+        self._running = False
+        if self._thread:
+            self._thread.join(timeout=1)
+
 
 class PushToTalk:
     """
     Push-to-talk activation using keyboard hotkey.
-    Records audio while the hotkey is held.
+    Supports single keys, hotkey combinations, and the Fn key.
     
     Default: Cmd+Shift+J
     """
@@ -22,27 +115,28 @@ class PushToTalk:
         on_deactivate: Optional[Callable[[], None]] = None,
         hotkey: str = "cmd+shift+j"
     ):
-        """
-        Initialize push-to-talk.
-        
-        Args:
-            on_activate: Callback when hotkey is pressed (start recording)
-            on_deactivate: Callback when hotkey is released (stop recording)
-            hotkey: Hotkey combination like "cmd+shift+j" or single key like "f5"
-        """
         self.on_activate = on_activate
         self.on_deactivate = on_deactivate
         self.hotkey_str = hotkey.lower()
         self.is_active = False
         self.listener = None
         self._lock = threading.Lock()
-        self._debug = True
+        self._debug = False
         
-        # Currently pressed keys
-        self._pressed_keys: Set = set()
+        # Check if using Fn key
+        self._use_fn = (hotkey.lower() == "fn")
         
-        # Parse the hotkey
-        self._required_modifiers, self._trigger_key = self._parse_hotkey(hotkey)
+        if self._use_fn:
+            self._fn_detector = FnKeyDetector(
+                on_activate=on_activate,
+                on_deactivate=on_deactivate
+            )
+        else:
+            self._fn_detector = None
+            # Currently pressed keys
+            self._pressed_keys: Set = set()
+            # Parse the hotkey
+            self._required_modifiers, self._trigger_key = self._parse_hotkey(hotkey)
         
         # Modifier key mappings
         self._modifier_map = {
@@ -61,24 +155,13 @@ class PushToTalk:
         }
     
     def _parse_hotkey(self, hotkey: str):
-        """
-        Parse a hotkey string into modifiers and trigger key.
-        
-        Args:
-            hotkey: String like "cmd+shift+j" or "f5"
-            
-        Returns:
-            (set of modifier names, trigger key character or Key object)
-        """
+        """Parse a hotkey string into modifiers and trigger key."""
         parts = [p.strip().lower() for p in hotkey.split("+")]
         
         modifiers = set()
         trigger = None
         
-        # Known modifiers
         modifier_names = {"cmd", "ctrl", "alt", "shift", "option"}
-        
-        # Function key map
         fkey_map = {f"f{i}": getattr(keyboard.Key, f"f{i}") for i in range(1, 13)}
         
         for part in parts:
@@ -90,19 +173,17 @@ class PushToTalk:
             elif part in fkey_map:
                 trigger = fkey_map[part]
             elif len(part) == 1:
-                # Single character key
                 trigger = part
             else:
-                print(f"⚠️  Unknown key part: {part}")
+                print(f"⚠️  Unknown key: {part}")
         
         if trigger is None:
-            print(f"⚠️  No trigger key found in hotkey '{hotkey}', defaulting to 'j'")
             trigger = "j"
         
         return modifiers, trigger
     
     def _get_current_modifiers(self) -> Set[str]:
-        """Get the set of currently pressed modifier names."""
+        """Get set of currently pressed modifier names."""
         modifiers = set()
         for key in self._pressed_keys:
             if key in self._modifier_map:
@@ -110,8 +191,7 @@ class PushToTalk:
         return modifiers
     
     def _check_hotkey_match(self, key) -> bool:
-        """Check if the current key + modifiers match the hotkey."""
-        # Check trigger key
+        """Check if current key + modifiers match the hotkey."""
         trigger_match = False
         
         if isinstance(self._trigger_key, keyboard.Key):
@@ -122,7 +202,6 @@ class PushToTalk:
         if not trigger_match:
             return False
         
-        # Check modifiers
         current_mods = self._get_current_modifiers()
         return current_mods == self._required_modifiers
     
@@ -130,21 +209,17 @@ class PushToTalk:
         """Handle key press."""
         self._pressed_keys.add(key)
         
-        if self._debug and not self._is_modifier(key):
+        if self._debug:
             mods = self._get_current_modifiers()
             key_str = self._key_to_string(key)
             if mods:
                 print(f"[DEBUG] Pressed: {'+'.join(sorted(mods))}+{key_str}")
-            else:
-                print(f"[DEBUG] Pressed: {key_str}")
         
         try:
             if self._check_hotkey_match(key):
                 with self._lock:
                     if not self.is_active:
                         self.is_active = True
-                        if self._debug:
-                            print(f"[DEBUG] ✓ Hotkey matched!")
                         if self.on_activate:
                             self.on_activate()
         except Exception as e:
@@ -154,16 +229,13 @@ class PushToTalk:
         """Handle key release."""
         self._pressed_keys.discard(key)
         
-        # Deactivate when ANY part of the hotkey is released
         if self.is_active:
-            # Check if trigger key was released
             trigger_released = False
             if isinstance(self._trigger_key, keyboard.Key):
                 trigger_released = (key == self._trigger_key)
             elif isinstance(key, keyboard.KeyCode) and key.char:
                 trigger_released = (key.char.lower() == self._trigger_key)
             
-            # Or if a required modifier was released
             modifier_released = False
             if key in self._modifier_map:
                 mod_name = self._modifier_map[key]
@@ -174,65 +246,60 @@ class PushToTalk:
                 with self._lock:
                     if self.is_active:
                         self.is_active = False
-                        if self._debug:
-                            print(f"[DEBUG] Hotkey released")
                         if self.on_deactivate:
                             self.on_deactivate()
     
-    def _is_modifier(self, key) -> bool:
-        """Check if key is a modifier."""
-        return key in self._modifier_map
-    
     def _key_to_string(self, key) -> str:
-        """Convert a key to a readable string."""
+        """Convert a key to readable string."""
         if isinstance(key, keyboard.KeyCode):
             return key.char if key.char else str(key)
         return str(key).replace("Key.", "")
     
     def start(self):
         """Start listening for keyboard events."""
-        if self.listener is not None:
-            return
-        
-        hotkey_display = self.hotkey_str.upper().replace("+", " + ")
-        print(f"Push-to-talk: Hold [{hotkey_display}] to speak")
-        
-        self.listener = keyboard.Listener(
-            on_press=self._on_press,
-            on_release=self._on_release
-        )
-        self.listener.start()
+        if self._use_fn:
+            self._fn_detector.start()
+        else:
+            if self.listener is not None:
+                return
+            
+            hotkey_display = self.hotkey_str.upper().replace("+", " + ")
+            print(f"Push-to-talk: Hold [{hotkey_display}] to speak")
+            
+            self.listener = keyboard.Listener(
+                on_press=self._on_press,
+                on_release=self._on_release
+            )
+            self.listener.start()
     
     def stop(self):
-        """Stop listening for keyboard events."""
-        if self.listener:
+        """Stop listening."""
+        if self._use_fn and self._fn_detector:
+            self._fn_detector.stop()
+        elif self.listener:
             self.listener.stop()
             self.listener = None
-    
-    def is_pressed(self) -> bool:
-        """Check if hotkey is currently pressed."""
-        return self.is_active
 
 
 if __name__ == "__main__":
-    # Test push-to-talk
     import time
     
     def on_start():
-        print("🎤 Recording started...")
+        print("🎤 Recording...")
     
     def on_stop():
-        print("⏹️  Recording stopped")
+        print("⏹️  Stopped")
     
+    # Test with Fn key
     ptt = PushToTalk(
         on_activate=on_start,
         on_deactivate=on_stop,
-        hotkey="cmd+shift+j"
+        hotkey="fn"
     )
     
     print("\n" + "=" * 50)
-    print("Testing push-to-talk")
-    print("Hold Cmd+Shift+J to test. Ctrl+C to exit.")
+    print("Testing Fn key detection")
+    print("Hold Fn to test. Ctrl+C to exit.")
     print("=" * 50 + "\n")
     
     ptt.start()

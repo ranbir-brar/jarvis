@@ -147,6 +147,7 @@ class Jarvis:
             
             # Get clipboard content
             clipboard_type, clipboard_content = get_clipboard_content()
+            print(f"📋 Clipboard: {clipboard_type} ({len(str(clipboard_content)) if clipboard_content else 0} chars)")
             
             # Build memory context if enabled
             memory_context = None
@@ -157,14 +158,17 @@ class Jarvis:
                         memory_context = "\n".join([f"- {r[:200]}" for r in results])
             
             # Route intent via LLM
+            print("🤖 Routing intent...")
             response = route_intent(
                 command=command,
                 clipboard_type=clipboard_type,
                 clipboard_content=clipboard_content,
                 memory_context=memory_context
             )
+            print(f"🎯 Action: {response.action_type.value if response else 'None'}")
             
             # Execute action
+            print("⚡ Executing...")
             success, message = execute_action(
                 response=response,
                 clipboard_content=clipboard_content,
@@ -172,11 +176,15 @@ class Jarvis:
                 memory_client=self.memory
             )
             
-            if not success:
-                print(f"Action failed: {message}")
+            if success:
+                print(f"✅ Done: {message}")
+            else:
+                print(f"❌ Failed: {message}")
                 
         except Exception as e:
             print(f"Error processing: {e}")
+            import traceback
+            traceback.print_exc()
             notify_error("Processing error")
         finally:
             self.processing = False
