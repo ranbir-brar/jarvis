@@ -1,23 +1,15 @@
 """
-macOS Notifications using terminal-notifier.
-Provides simple notification functionality for Jarvis.
+macOS Notifications using macos-notifications library.
+Provides notification functionality with custom Jarvis icon.
 """
 
-import subprocess
-import shutil
-import os
 from typing import Optional
 from pathlib import Path
 
 from app.config import config
 
 # Path to Jarvis logo for notifications
-JARVIS_LOGO = Path(__file__).parent.parent / "public" / "jarvis_logo.jpg"
-
-
-def is_terminal_notifier_available() -> bool:
-    """Check if terminal-notifier is installed."""
-    return shutil.which("terminal-notifier") is not None
+JARVIS_LOGO = Path(__file__).parent.parent / "public" / "jarvis_logo.png"
 
 
 def notify(
@@ -27,18 +19,37 @@ def notify(
     sound: bool = False
 ) -> bool:
     """
-    Show a macOS notification.
-    
-    Args:
-        message: Main notification message
-        title: Notification title (defaults to config.NOTIFICATION_TITLE)
-        subtitle: Optional subtitle
-        sound: Whether to play a sound
-        
-    Returns:
-        True if notification was sent successfully, False otherwise
+    Show a macOS notification with Jarvis icon.
     """
-    if not is_terminal_notifier_available():
+    try:
+        from mac_notifications.client import create_notification
+        
+        create_notification(
+            title=title or config.NOTIFICATION_TITLE,
+            subtitle=subtitle or "",
+            text=message,
+            icon=str(JARVIS_LOGO) if JARVIS_LOGO.exists() else None
+        )
+        return True
+    except ImportError:
+        # Fallback to terminal-notifier
+        return _notify_terminal_notifier(message, title, subtitle, sound)
+    except Exception as e:
+        print(f"Notification error: {e}")
+        return _notify_terminal_notifier(message, title, subtitle, sound)
+
+
+def _notify_terminal_notifier(
+    message: str,
+    title: Optional[str] = None,
+    subtitle: Optional[str] = None,
+    sound: bool = False
+) -> bool:
+    """Fallback to terminal-notifier."""
+    import subprocess
+    import shutil
+    
+    if shutil.which("terminal-notifier") is None:
         print(f"[Notification] {title or config.NOTIFICATION_TITLE}: {message}")
         return False
     
@@ -49,9 +60,6 @@ def notify(
             "-message", message,
         ]
         
-        if JARVIS_LOGO.exists():
-            cmd.extend(["-appIcon", str(JARVIS_LOGO)])
-        
         if subtitle:
             cmd.extend(["-subtitle", subtitle])
         
@@ -60,9 +68,6 @@ def notify(
         
         subprocess.run(cmd, check=True, capture_output=True)
         return True
-    except subprocess.CalledProcessError as e:
-        print(f"Notification error: {e}")
-        return False
     except Exception as e:
         print(f"Notification error: {e}")
         return False
@@ -84,8 +89,4 @@ def notify_info(message: str, subtitle: Optional[str] = None) -> bool:
 
 
 if __name__ == "__main__":
-    # Test notification
-    if is_terminal_notifier_available():
-        notify_success("Jarvis is ready!", subtitle="Test notification")
-    else:
-        print("terminal-notifier not installed. Run: brew install terminal-notifier")
+    notify_success("Jarvis is ready!", subtitle="Test notification")
