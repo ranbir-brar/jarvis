@@ -40,32 +40,34 @@ USER COMMAND: {command}
 """
 
 
-SCREENSHOT_TO_CODE_PROMPT = """Convert this UI screenshot to pixel-perfect, production-ready JSX code.
+SCREENSHOT_TO_CODE_PROMPT = """Convert this UI screenshot to a pixel-perfect, complete React component file.
 
 TARGET FRAMEWORK: {target}
 
-CRITICAL RULES:
-1. Output ONLY the JSX elements - no imports, no function wrapper, no exports
-2. The output should be a drop-in snippet for an existing React component
-3. Match the EXACT visual design:
-   - Copy exact colors (use specific hex codes or Tailwind colors that match)
-   - Match border radius exactly (rounded-lg, rounded-xl, rounded-2xl, etc.)
-   - Match shadows (shadow-sm, shadow-md, shadow-lg, shadow-xl)
-   - Match spacing precisely (padding, margins, gaps)
-   - Match typography (font sizes, weights, colors)
-4. Use Tailwind CSS utility classes for all styling
-5. For gradients, use bg-gradient-to-r, bg-gradient-to-br, etc.
-6. Include focus states for interactive elements
-7. NO markdown fences, NO explanations, JUST the JSX
+OUTPUT REQUIREMENTS:
+1. Generate a COMPLETE, ready-to-use React component file
+2. Include all necessary imports at the top
+3. Export the component as default
+4. Use any libraries you need (React, icons, etc.) - just import them
+5. The file should work when dropped into a Vite + Tailwind project
 
-Be extremely precise with:
-- Button colors and gradients
-- Input field border colors on focus (often purple/indigo)
-- Checkbox styling
-- Link colors
-- Background gradients (look for subtle gradients in corners)
+VISUAL MATCHING (CRITICAL):
+- Match colors EXACTLY (use specific Tailwind colors or custom hex values)
+- Match border radius precisely (rounded-lg, rounded-xl, rounded-2xl, etc.)
+- Match shadows exactly (shadow-sm, shadow-md, shadow-lg, shadow-xl)
+- Match spacing precisely (padding, margins, gaps)
+- Match typography (font sizes, weights, colors)
+- Replicate any gradients (bg-gradient-to-r, bg-gradient-to-br, etc.)
+- Include hover and focus states for interactive elements
 
-Component name hint: {component_name}
+STYLING:
+- Use Tailwind CSS utility classes for all styling
+- For complex gradients, use inline styles if needed
+- Include the background/container styling to match the screenshot
+
+NO markdown fences, NO explanations, JUST the complete JSX file.
+
+Component name: {component_name}
 """
 
 
