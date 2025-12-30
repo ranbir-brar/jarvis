@@ -39,20 +39,17 @@ class Jarvis:
         self.clipboard_monitor = ClipboardMonitor()
         self.memory = get_memory()
         
-        # Audio settings
+        
         self.sample_rate = 16000
         self.channels = 1
         
-        # Recording state
         self.recording = False
         self.audio_frames = []
         self.audio_lock = threading.Lock()
         self.audio_stream = None
         
-        # Processing state
         self.processing = False
         
-        # Push-to-talk
         self.ptt = PushToTalk(
             on_activate=self._start_recording,
             on_deactivate=self._stop_recording,
@@ -88,7 +85,6 @@ class Jarvis:
             self.audio_frames = []
             self.recording = True
         
-        # Print with flush to ensure immediate visibility
         print("\r🎤 Listening...            ", end="", flush=True)
     
     def _stop_recording(self):
@@ -108,7 +104,6 @@ class Jarvis:
             print("Recording too short, ignoring")
             return
         
-        # Process in background thread
         threading.Thread(
             target=self._process_audio,
             args=(audio_data,),
@@ -123,10 +118,9 @@ class Jarvis:
         self.processing = True
         
         try:
-            # Convert to WAV
+        try:
             wav_data = self._to_wav(audio_data)
             
-            # Transcribe
             transcript = transcribe_audio(wav_data)
             if not transcript or not transcript.strip():
                 print("No speech detected")
@@ -136,20 +130,16 @@ class Jarvis:
             print(f"📝 Heard: '{transcript}'")
             command = transcript.strip()
             
-            # Check for stop command
             if is_stop_command(command):
                 notify_info("Goodbye!")
                 self.stop()
                 return
             
-            # Normalize command
             command = normalize_command(command)
             
-            # Get clipboard content
             clipboard_type, clipboard_content = get_clipboard_content()
             print(f"📋 Clipboard: {clipboard_type} ({len(str(clipboard_content)) if clipboard_content else 0} chars)")
             
-            # Build memory context if enabled
             memory_context = None
             if self.memory:
                 if any(word in command.lower() for word in ["find", "where", "search", "recall", "what was"]):
@@ -157,7 +147,6 @@ class Jarvis:
                     if results:
                         memory_context = "\n".join([f"- {r[:200]}" for r in results])
             
-            # Route intent via LLM
             print("🤖 Routing intent...")
             response = route_intent(
                 command=command,
@@ -167,7 +156,6 @@ class Jarvis:
             )
             print(f"🎯 Action: {response.action_type.value if response else 'None'}")
             
-            # Execute action
             print("⚡ Executing...")
             success, message = execute_action(
                 response=response,
@@ -206,7 +194,6 @@ class Jarvis:
         print("  Push-to-Talk Mode")
         print("=" * 50)
         
-        # Validate config
         if not self.validate_config():
             print("\nPlease fix configuration errors and try again.")
             sys.exit(1)
@@ -214,7 +201,6 @@ class Jarvis:
         print(f"\nProvider: {config.MODEL_PROVIDER}")
         print(f"Memory: {'Enabled' if config.ENABLE_MEMORY else 'Disabled'}")
         
-        # Get hotkey display
         hotkey = config.ACTIVATION_KEY
         hotkey_display = hotkey.upper().replace("+", " + ")
         
@@ -223,14 +209,11 @@ class Jarvis:
         
         self.running = True
         
-        # Show startup notification
         notify_success(f"Ready! Hold {hotkey_display}")
         
         try:
-            # Start keyboard listener
             self.ptt.start()
             
-            # Start audio stream
             self.audio_stream = sd.InputStream(
                 samplerate=self.sample_rate,
                 channels=self.channels,
@@ -241,7 +224,6 @@ class Jarvis:
             
             print("Ready and waiting...")
             
-            # Keep running until stopped
             while self.running:
                 time.sleep(0.1)
                     

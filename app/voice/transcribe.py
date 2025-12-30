@@ -23,7 +23,6 @@ def transcribe_audio(audio_bytes: bytes) -> Optional[str]:
         
         client = Groq(api_key=config.GROQ_API_KEY)
         
-        # Create a file-like object from bytes
         audio_file = io.BytesIO(audio_bytes)
         audio_file.name = "audio.wav"
         

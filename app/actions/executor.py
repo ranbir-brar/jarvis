@@ -19,64 +19,43 @@ def execute_action(
 ) -> Tuple[bool, str]:
     """
     Execute an action based on the LLM response.
-    
-    Args:
-        response: The structured response from the LLM
-        clipboard_content: Current clipboard content
-        clipboard_type: Type of clipboard content ('text', 'image', 'empty')
-        memory_client: Optional memory client for memory operations
-        
-    Returns:
-        Tuple of (success: bool, message: str)
     """
     action_type = response.action_type
     
     try:
-        # Simple text copy
         if action_type == ActionType.COPY_TEXT_TO_CLIPBOARD:
             return _handle_copy_text(response)
         
-        # Short reply (no clipboard change)
         elif action_type == ActionType.SHORT_REPLY:
             return _handle_short_reply(response)
         
-        # No action needed
         elif action_type == ActionType.NO_ACTION:
             return _handle_no_action(response)
         
-        # Screenshot to code
         elif action_type == ActionType.SCREENSHOT_TO_CODE:
             return _handle_screenshot_to_code(response, clipboard_content)
         
-        # Data structuring
         elif action_type == ActionType.STRUCTURE_DATA:
             return _handle_structure_data(response, clipboard_content)
         
-        # Code debugging
         elif action_type == ActionType.DEBUG_CODE:
             return _handle_debug_code(response, clipboard_content)
         
-        # Text rewriting
         elif action_type == ActionType.REWRITE_TEXT:
             return _handle_rewrite_text(response, clipboard_content)
         
-        # Background removal
         elif action_type == ActionType.REMOVE_BACKGROUND:
             return _handle_remove_background(response, clipboard_content)
         
-        # Translation
         elif action_type == ActionType.TRANSLATE:
             return _handle_translate(response, clipboard_content)
         
-        # Memory save
         elif action_type == ActionType.SAVE_TO_MEMORY:
             return _handle_save_to_memory(response, clipboard_content, memory_client)
         
-        # Memory search
         elif action_type == ActionType.SEARCH_MEMORY:
             return _handle_search_memory(response, memory_client)
         
-        # Clipboard utilities
         elif action_type == ActionType.CLIPBOARD_UTILITY:
             return _handle_clipboard_utility(response, clipboard_content)
         
@@ -198,7 +177,6 @@ def _handle_debug_code(
     params = response.debug_code
     mode = params.mode if params else "fix_only"
     
-    # If content is already provided by the router
     if response.content:
         result = response.content
     else:
@@ -233,7 +211,6 @@ def _handle_rewrite_text(
     tone = params.tone if params else "professional"
     length = params.length if params else "same"
     
-    # If content is already provided by the router
     if response.content:
         result = response.content
     else:
@@ -294,7 +271,6 @@ def _handle_translate(
     params = response.translate
     target_language = params.target_language if params else "english"
     
-    # If content is already provided by the router
     if response.content:
         result = response.content
     else:
@@ -353,7 +329,7 @@ def _handle_search_memory(
         notify_error("Memory not enabled")
         return False, "Memory feature is not enabled"
     
-    # If content is already provided (from memory search in router)
+    
     if response.content:
         success = copy_text_to_clipboard(response.content)
         if success:
