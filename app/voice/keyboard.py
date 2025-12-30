@@ -1,6 +1,6 @@
 """
 Keyboard listener for push-to-talk activation.
-Detects when the fn key (or other activation key) is pressed.
+Uses pynput for global key detection.
 """
 
 import threading
@@ -12,13 +12,15 @@ class PushToTalk:
     """
     Push-to-talk activation using keyboard.
     Records audio only while the activation key is held.
+    
+    Default: F5 key (function keys are most reliable)
     """
     
     def __init__(
         self,
         on_activate: Optional[Callable[[], None]] = None,
         on_deactivate: Optional[Callable[[], None]] = None,
-        activation_key: str = "fn"
+        activation_key: str = "f5"
     ):
         """
         Initialize push-to-talk.
@@ -26,55 +28,73 @@ class PushToTalk:
         Args:
             on_activate: Callback when key is pressed (start recording)
             on_deactivate: Callback when key is released (stop recording)
-            activation_key: Key to use for activation. Options:
-                           "fn" - Function key
-                           "ctrl" - Control key  
-                           "alt" - Option key
-                           "cmd" - Command key
-                           "shift" - Shift key
-                           "space" - Space bar
+            activation_key: Key to use. Recommended: f5, f6, f7, f8
+                           Also works: space, ctrl, alt, shift
         """
         self.on_activate = on_activate
         self.on_deactivate = on_deactivate
-        self.activation_key = activation_key
+        self.activation_key = activation_key.lower()
         self.is_active = False
         self.listener = None
         self._lock = threading.Lock()
+        self._debug = True  # Enable debug output
         
         # Map key names to pynput keys
         self._key_map = {
-            # "fn": keyboard.Key.fn, # Not available in pynput
-            "ctrl": keyboard.Key.ctrl,
-            "alt": keyboard.Key.alt,
-            "cmd": keyboard.Key.cmd,
-            "shift": keyboard.Key.shift,
-            "space": keyboard.Key.space,
+            # Function keys (MOST RELIABLE)
             "f1": keyboard.Key.f1,
             "f2": keyboard.Key.f2,
+            "f3": keyboard.Key.f3,
+            "f4": keyboard.Key.f4,
+            "f5": keyboard.Key.f5,
+            "f6": keyboard.Key.f6,
+            "f7": keyboard.Key.f7,
+            "f8": keyboard.Key.f8,
+            "f9": keyboard.Key.f9,
+            "f10": keyboard.Key.f10,
+            "f11": keyboard.Key.f11,
             "f12": keyboard.Key.f12,
+            # Modifier keys (less reliable when pressed alone)
+            "ctrl": keyboard.Key.ctrl,
+            "ctrl_l": keyboard.Key.ctrl_l,
+            "ctrl_r": keyboard.Key.ctrl_r,
+            "alt": keyboard.Key.alt,
+            "alt_l": keyboard.Key.alt_l,
+            "alt_r": keyboard.Key.alt_r,
+            "cmd": keyboard.Key.cmd,
+            "cmd_l": keyboard.Key.cmd_l,
+            "cmd_r": keyboard.Key.cmd_r,
+            "shift": keyboard.Key.shift,
+            "shift_l": keyboard.Key.shift_l,
+            "shift_r": keyboard.Key.shift_r,
+            # Other keys
+            "space": keyboard.Key.space,
+            "tab": keyboard.Key.tab,
+            "caps_lock": keyboard.Key.caps_lock,
         }
+        
+        self._target_key = self._get_activation_key()
     
     def _get_activation_key(self):
         """Get the pynput key object for the activation key."""
-        key_name = self.activation_key.lower()
-        
-        if key_name == "fn":
-            print("⚠️  Note: The 'fn' key cannot be detected by Python on macOS.")
-            print("⚠️  Falling back to Right Command (cmd_r).")
-            print("⚠️  To fix: Edit .env and set ACTIVATION_KEY=cmd_r (or ctrl, alt, shift)")
-            return keyboard.Key.cmd_r
-            
-        return self._key_map.get(key_name, keyboard.Key.cmd_r)
+        key = self._key_map.get(self.activation_key)
+        if key is None:
+            print(f"⚠️  Unknown key '{self.activation_key}', defaulting to F5")
+            return keyboard.Key.f5
+        return key
     
     def _on_press(self, key):
         """Handle key press."""
+        if self._debug:
+            print(f"[DEBUG] Key pressed: {key}")
+        
         try:
-            target_key = self._get_activation_key()
-            
-            if key == target_key:
+            if key == self._target_key:
                 with self._lock:
                     if not self.is_active:
                         self.is_active = True
+                        if self._debug:
+                            print(f"[DEBUG] Activation key detected!")
                         if self.on_activate:
                             self.on_activate()
         except Exception as e:
@@ -82,13 +102,16 @@ class PushToTalk:
     
     def _on_release(self, key):
         """Handle key release."""
+        if self._debug:
+            print(f"[DEBUG] Key released: {key}")
+        
         try:
-            target_key = self._get_activation_key()
-            
-            if key == target_key:
+            if key == self._target_key:
                 with self._lock:
                     if self.is_active:
                         self.is_active = False
+                        if self._debug:
+                            print(f"[DEBUG] Activation key released!")
                         if self.on_deactivate:
                             self.on_deactivate()
         except Exception as e:
@@ -99,12 +122,15 @@ class PushToTalk:
         if self.listener is not None:
             return
         
+        key_display = self.activation_key.upper()
+        print(f"Push-to-talk: Hold [{key_display}] to speak")
+        print(f"[DEBUG] Listening for key: {self._target_key}")
+        
         self.listener = keyboard.Listener(
             on_press=self._on_press,
             on_release=self._on_release
         )
         self.listener.start()
-        print(f"Push-to-talk: Hold [{self.activation_key}] to speak")
     
     def stop(self):
         """Stop listening for keyboard events."""
@@ -115,42 +141,6 @@ class PushToTalk:
     def is_pressed(self) -> bool:
         """Check if activation key is currently pressed."""
         return self.is_active
-
-
-class KeyboardShortcuts:
-    """
-    Handle keyboard shortcuts for Jarvis.
-    """
-    
-    def __init__(self):
-        self.listener = None
-        self.shortcuts = {}
-    
-    def register(self, key_combo: str, callback: Callable[[], None]):
-        """
-        Register a keyboard shortcut.
-        
-        Args:
-            key_combo: Key combination like "cmd+shift+j"
-            callback: Function to call when shortcut is pressed
-        """
-        self.shortcuts[key_combo] = callback
-    
-    def _on_press(self, key):
-        """Handle key press for shortcuts."""
-        # TODO: Implement combo detection
-        pass
-    
-    def start(self):
-        """Start listening for shortcuts."""
-        self.listener = keyboard.Listener(on_press=self._on_press)
-        self.listener.start()
-    
-    def stop(self):
-        """Stop listening for shortcuts."""
-        if self.listener:
-            self.listener.stop()
-            self.listener = None
 
 
 if __name__ == "__main__":
@@ -166,10 +156,14 @@ if __name__ == "__main__":
     ptt = PushToTalk(
         on_activate=on_start,
         on_deactivate=on_stop,
-        activation_key="fn"
+        activation_key="f5"
     )
     
-    print("Testing push-to-talk. Press fn key to test. Ctrl+C to exit.")
+    print("\n" + "=" * 50)
+    print("Testing push-to-talk")
+    print("Press F5 to test. Ctrl+C to exit.")
+    print("=" * 50 + "\n")
+    
     ptt.start()
     
     try:

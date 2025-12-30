@@ -208,7 +208,9 @@ class Jarvis:
         
         # Get standardized key name
         key_code = config.ACTIVATION_KEY
-        key_display = "Right Command" if key_code == "cmd_r" else key_code
+        key_display = key_code.upper() if key_code.startswith("f") else key_code
+        if key_code == "cmd_r":
+            key_display = "Right Command"
         
         print(f"\n📌 Hold [{key_display}] key to speak, release to process")
         print("Say 'stop' to exit.\n")
