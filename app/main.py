@@ -56,7 +56,7 @@ class Jarvis:
         self.ptt = PushToTalk(
             on_activate=self._start_recording,
             on_deactivate=self._stop_recording,
-            activation_key=activation_key
+            hotkey=activation_key
         )
     
     def validate_config(self) -> bool:
@@ -206,19 +206,17 @@ class Jarvis:
         print(f"\nProvider: {config.MODEL_PROVIDER}")
         print(f"Memory: {'Enabled' if config.ENABLE_MEMORY else 'Disabled'}")
         
-        # Get standardized key name
-        key_code = config.ACTIVATION_KEY
-        key_display = key_code.upper() if key_code.startswith("f") else key_code
-        if key_code == "cmd_r":
-            key_display = "Right Command"
+        # Get hotkey display
+        hotkey = config.ACTIVATION_KEY
+        hotkey_display = hotkey.upper().replace("+", " + ")
         
-        print(f"\n📌 Hold [{key_display}] key to speak, release to process")
+        print(f"\n📌 Hold [{hotkey_display}] to speak, release to process")
         print("Say 'stop' to exit.\n")
         
         self.running = True
         
         # Show startup notification
-        notify_success(f"Jarvis ready! Hold {key_display} to speak")
+        notify_success(f"Ready! Hold {hotkey_display}")
         
         try:
             # Start keyboard listener
