@@ -40,34 +40,41 @@ USER COMMAND: {command}
 """
 
 
-SCREENSHOT_TO_CODE_PROMPT = """Convert this UI screenshot to a pixel-perfect, complete React component file.
+SCREENSHOT_TO_CODE_PROMPT = """Convert this UI screenshot to a pixel-perfect React component.
 
 TARGET FRAMEWORK: {target}
 
-OUTPUT REQUIREMENTS:
-1. Generate a COMPLETE, ready-to-use React component file
-2. Include all necessary imports at the top
-3. Export the component as default
-4. Use any libraries you need (React, icons, etc.) - just import them
-5. The file should work when dropped into a Vite + Tailwind project
+CRITICAL OUTPUT RULES:
+1. Output the component EXACTLY ONCE - do not repeat or duplicate
+2. The component MUST be named "Component" and exported as default
+3. Do NOT use external icon libraries - use inline SVGs for all icons
+4. Do NOT include background/container wrapping - just the component itself
 
-VISUAL MATCHING (CRITICAL):
-- Match colors EXACTLY (use specific Tailwind colors or custom hex values)
-- Match border radius precisely (rounded-lg, rounded-xl, rounded-2xl, etc.)
-- Match shadows exactly (shadow-sm, shadow-md, shadow-lg, shadow-xl)
+FILE STRUCTURE (exactly this):
+```
+import React from 'react';
+
+export default function Component() {{
+  return (
+    // Your JSX here
+  );
+}}
+```
+
+VISUAL MATCHING:
+- Match colors EXACTLY (use Tailwind colors or custom hex like bg-[#E54865])
+- Match border radius precisely (rounded-full, rounded-xl, etc.)
+- Match shadows exactly (shadow-md, shadow-lg, etc.)
 - Match spacing precisely (padding, margins, gaps)
 - Match typography (font sizes, weights, colors)
-- Replicate any gradients (bg-gradient-to-r, bg-gradient-to-br, etc.)
-- Include hover and focus states for interactive elements
+- Include hover states for interactive elements
 
 STYLING:
-- Use Tailwind CSS utility classes for all styling
-- For complex gradients, use inline styles if needed
-- Include the background/container styling to match the screenshot
+- Use Tailwind CSS utility classes
+- For icons, use inline SVGs (search icon, etc.)
+- NO external libraries except React
 
-NO markdown fences, NO explanations, JUST the complete JSX file.
-
-Component name: {component_name}
+OUTPUT ONLY THE CODE. No markdown fences, no explanations, no duplicates.
 """
 
 
