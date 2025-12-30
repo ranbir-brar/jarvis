@@ -172,7 +172,9 @@ def _handle_structure_data(
     if result:
         success = copy_text_to_clipboard(result)
         if success:
-            notify_success(response.message or f"Converted to {target_format}")
+            # Show preview in notification (first 80 chars)
+            preview = result[:80] + "..." if len(result) > 80 else result
+            notify_success(f"{target_format.upper()}: {preview}")
             return True, f"Data structured as {target_format}"
         else:
             notify_error("Failed to copy")
@@ -205,7 +207,8 @@ def _handle_debug_code(
     if result:
         success = copy_text_to_clipboard(result)
         if success:
-            notify_success(response.message or "Code fixed")
+            # Show short confirmation
+            notify_success("Code fixed and copied!")
             return True, "Code debugged/fixed"
         else:
             notify_error("Failed to copy")
@@ -239,7 +242,9 @@ def _handle_rewrite_text(
     if result:
         success = copy_text_to_clipboard(result)
         if success:
-            notify_success(response.message or "Text rewritten")
+            # Show preview in notification (first 80 chars)
+            preview = result[:80] + "..." if len(result) > 80 else result
+            notify_success(preview)
             return True, "Text rewritten"
         else:
             notify_error("Failed to copy")
@@ -298,7 +303,9 @@ def _handle_translate(
     if result:
         success = copy_text_to_clipboard(result)
         if success:
-            notify_success(response.message or f"Translated")
+            # Show preview in notification (first 80 chars)
+            preview = result[:80] + "..." if len(result) > 80 else result
+            notify_success(preview)
             return True, f"Translated to {target_language}"
         else:
             notify_error("Failed to copy")
