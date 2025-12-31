@@ -24,10 +24,13 @@ Jarvis understands your intent and the content on your clipboard (text or image)
 
 - **Semantic Memory**: "Jarvis, remember my API key is 123" → Saves to local database.
 - **Recall**: "Jarvis, what is my API key?" → Searches memory and retrieves answer.
+- **Delete**: "Jarvis, delete my API key from memory" → Removes specific item.
+- **Clear**: "Jarvis, clear all memory" → Erases all stored data.
 
 ### Utilities
 
 - **Quick Tools**: "Trim whitespace", "Dedupe lines", "Extract emails", "Extract URLs", "Prettify JSON", "Slugify".
+- **Arithmetic**: "What's 15 \* 23?" → Calculates and copies result to clipboard.
 
 ## Quick Start
 

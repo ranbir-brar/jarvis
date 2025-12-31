@@ -243,5 +243,7 @@ def quick_classify(command: str) -> Optional[ActionType]:
     if any(phrase in command_lower for phrase in ["convert to json", "convert to csv", "to json", "to csv", "make this json", "make this csv"]):
         return ActionType.STRUCTURE_DATA
     
+    # Note: CALCULATE is NOT quick-classified because we need the LLM to compute the result
+    
     # For everything else, use LLM
     return None

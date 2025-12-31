@@ -65,6 +65,9 @@ def execute_action(
         elif action_type == ActionType.CLIPBOARD_UTILITY:
             return _handle_clipboard_utility(response, clipboard_content)
         
+        elif action_type == ActionType.CALCULATE:
+            return _handle_calculate(response)
+        
         else:
             notify_error(f"Unknown action: {action_type}")
             return False, f"Unknown action type: {action_type}"
@@ -440,3 +443,21 @@ def _handle_clear_memory(memory_client: Optional[any]) -> Tuple[bool, str]:
     else:
         notify_error("Failed to clear memory")
         return False, "Failed to clear memory"
+
+
+def _handle_calculate(response: AssistantResponse) -> Tuple[bool, str]:
+    """Handle CALCULATE action - evaluate math and copy result to clipboard."""
+    # The LLM should put the calculated result in response.content
+    result = response.content
+    
+    if result:
+        success = copy_text_to_clipboard(str(result))
+        if success:
+            notify_success(f"= {result}")
+            return True, f"Calculated: {result}"
+        else:
+            notify_error("Failed to copy result")
+            return False, "Failed to copy calculation result"
+    else:
+        notify_error("No calculation result")
+        return False, "No calculation result provided"

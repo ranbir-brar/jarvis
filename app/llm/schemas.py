@@ -32,6 +32,7 @@ class ActionType(str, Enum):
     
     # Utility actions
     CLIPBOARD_UTILITY = "CLIPBOARD_UTILITY"
+    CALCULATE = "CALCULATE"
 
 
 class ScreenshotToCodeParams(BaseModel):
@@ -130,7 +131,7 @@ class AssistantResponse(BaseModel):
     )
     
     action_type: str = Field(
-        description="The action to perform. Values: COPY_TEXT_TO_CLIPBOARD, SHORT_REPLY, NO_ACTION, SCREENSHOT_TO_CODE, STRUCTURE_DATA, DEBUG_CODE, REWRITE_TEXT, REMOVE_BACKGROUND, TRANSLATE, SAVE_TO_MEMORY, SEARCH_MEMORY, DELETE_MEMORY, CLEAR_MEMORY, CLIPBOARD_UTILITY"
+        description="The action to perform. Values: COPY_TEXT_TO_CLIPBOARD, SHORT_REPLY, NO_ACTION, SCREENSHOT_TO_CODE, STRUCTURE_DATA, DEBUG_CODE, REWRITE_TEXT, REMOVE_BACKGROUND, TRANSLATE, SAVE_TO_MEMORY, SEARCH_MEMORY, DELETE_MEMORY, CLEAR_MEMORY, CLIPBOARD_UTILITY, CALCULATE"
     )
     
     message: str = Field(
