@@ -50,6 +50,7 @@ CRITICAL OUTPUT RULES:
 2. The component MUST be named "{component_name}" and exported as default
 3. Do NOT use external icon libraries - use inline SVGs for all icons
 4. Do NOT include background/container wrapping - just the component itself
+5. Component must be SELF-CONTAINED with NO props required
 
 FILE STRUCTURE (exactly this):
 ```
@@ -62,6 +63,12 @@ export default function {component_name}() {{
 }}
 ```
 
+PLACEHOLDER DATA:
+- Use realistic sample text (e.g., "Sample Property", "$299/night", "4.9 rating")
+- For images, use a gradient div instead: <div className="w-full h-48 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl" />
+- For avatars, use a colored circle with initials
+- Numbers should be realistic samples (prices, ratings, counts)
+
 VISUAL MATCHING:
 - Match colors EXACTLY (use Tailwind colors or custom hex like bg-[#E54865])
 - Match border radius precisely (rounded-full, rounded-xl, etc.)
@@ -72,8 +79,9 @@ VISUAL MATCHING:
 
 STYLING:
 - Use Tailwind CSS utility classes
-- For icons, use inline SVGs (search icon, etc.)
+- For icons, use inline SVGs
 - NO external libraries except React
+- NO props - hardcode all sample data
 
 OUTPUT ONLY THE CODE. No markdown fences, no explanations, no duplicates.
 """

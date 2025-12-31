@@ -41,6 +41,11 @@ def screenshot_to_code(
         
         client = genai.Client(api_key=config.GEMINI_API_KEY)
         
+        # Resize image if too large (improves latency)
+        max_size = 1024
+        if image.width > max_size or image.height > max_size:
+            image.thumbnail((max_size, max_size))
+            
         image_bytes = image_to_bytes(image)
         
         prompt = SCREENSHOT_TO_CODE_PROMPT.format(
