@@ -56,6 +56,12 @@ def execute_action(
         elif action_type == ActionType.SEARCH_MEMORY:
             return _handle_search_memory(response, memory_client)
         
+        elif action_type == ActionType.DELETE_MEMORY:
+            return _handle_delete_memory(response, memory_client)
+        
+        elif action_type == ActionType.CLEAR_MEMORY:
+            return _handle_clear_memory(memory_client)
+        
         elif action_type == ActionType.CLIPBOARD_UTILITY:
             return _handle_clipboard_utility(response, clipboard_content)
         
@@ -329,25 +335,22 @@ def _handle_search_memory(
         notify_error("Memory not enabled")
         return False, "Memory feature is not enabled"
     
-    
-    if response.content:
-        success = copy_text_to_clipboard(response.content)
-        if success:
-            notify_success(response.message or "Found and copied")
-            return True, "Memory result copied"
-        else:
-            notify_error("Failed to copy")
-            return False, "Failed to copy memory result"
-    
+    # ALWAYS search the database - never trust LLM's response.content
+    # The LLM might hallucinate values instead of retrieving real ones
     params = response.memory
     query = params.query if params else ""
+    
+    if not query:
+        # Try to extract query from the original command
+        query = response.message if response.message else ""
     
     results = search_memory(memory_client, query)
     
     if results:
+        # Return the EXACT content from the database
         success = copy_text_to_clipboard(results[0])
         if success:
-            notify_success(response.message or "Found and copied")
+            notify_success(f"Found: {results[0][:30]}...")
             return True, "Memory result copied"
         else:
             notify_error("Failed to copy")
@@ -384,3 +387,56 @@ def _handle_clipboard_utility(
     else:
         notify_error(f"Failed to apply {operation}")
         return False, f"Failed to apply {operation}"
+
+
+def _handle_delete_memory(
+    response: AssistantResponse,
+    memory_client: Optional[any]
+) -> Tuple[bool, str]:
+    """Handle DELETE_MEMORY action."""
+    if memory_client is None:
+        notify_error("Memory not enabled")
+        return False, "Memory feature is not enabled"
+    
+    # Get the query/label from the response
+    params = response.memory
+    query = params.query if params else None
+    
+    if not query:
+        notify_error("Need query to find item to delete")
+        return False, "No query provided for deletion"
+    
+    # Search for matching items
+    results = memory_client.search_with_metadata(query, n_results=1)
+    
+    if results:
+        # Delete the first match
+        doc_id = results[0]['id']
+        label = results[0].get('metadata', {}).get('label', 'item')
+        success = memory_client.delete(doc_id)
+        
+        if success:
+            notify_success(f"Deleted: {label}")
+            return True, f"Deleted memory item: {label}"
+        else:
+            notify_error("Failed to delete")
+            return False, "Failed to delete memory item"
+    else:
+        notify_info("No matching item found")
+        return True, "No matching memory item found to delete"
+
+
+def _handle_clear_memory(memory_client: Optional[any]) -> Tuple[bool, str]:
+    """Handle CLEAR_MEMORY action."""
+    if memory_client is None:
+        notify_error("Memory not enabled")
+        return False, "Memory feature is not enabled"
+    
+    success = memory_client.clear()
+    
+    if success:
+        notify_success("Memory cleared!")
+        return True, "All memory cleared"
+    else:
+        notify_error("Failed to clear memory")
+        return False, "Failed to clear memory"

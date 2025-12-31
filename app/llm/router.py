@@ -30,6 +30,80 @@ def get_clipboard_preview(content_type: str, content: Union[str, Image.Image, No
     return "[Unknown content type]"
 
 
+def _build_quick_response(
+    action_type: ActionType, 
+    command: str, 
+    clipboard_content: Union[str, Image.Image, None]
+) -> AssistantResponse:
+    """Build a response for quick-classified actions without LLM."""
+    from app.llm.schemas import MemoryParams, DataStructuringParams
+    import re
+    
+    # Extract label from command for memory operations
+    label_match = re.search(r'(?:as my |as |my )(.+?)(?:\s*$|\.)', command.lower())
+    label = label_match.group(1).strip() if label_match else None
+    
+    # Extract search query
+    query_match = re.search(r"(?:what'?s my |what is my |find my |get my )(.+?)(?:\s*\?|$)", command.lower())
+    query = query_match.group(1).strip() if query_match else command
+    
+    # Build response based on action type
+    if action_type == ActionType.SAVE_TO_MEMORY:
+        return AssistantResponse(
+            thinking="Quick classify: save to memory",
+            action_type=action_type.value,
+            message=f"Saving as {label or 'note'}",
+            emoji="💾",
+            memory=MemoryParams(label=label, category="important_info")
+        )
+    
+    elif action_type == ActionType.SEARCH_MEMORY:
+        return AssistantResponse(
+            thinking="Quick classify: search memory",
+            action_type=action_type.value,
+            message=f"Searching for {query}",
+            emoji="🔍",
+            memory=MemoryParams(query=query)
+        )
+    
+    elif action_type == ActionType.DELETE_MEMORY:
+        return AssistantResponse(
+            thinking="Quick classify: delete memory",
+            action_type=action_type.value,
+            message=f"Deleting {query}",
+            emoji="🗑️",
+            memory=MemoryParams(query=query)
+        )
+    
+    elif action_type == ActionType.CLEAR_MEMORY:
+        return AssistantResponse(
+            thinking="Quick classify: clear all memory",
+            action_type=action_type.value,
+            message="Clearing all memory",
+            emoji="🧹"
+        )
+    
+    elif action_type == ActionType.STRUCTURE_DATA:
+        # Detect format from command
+        fmt = "json" if "json" in command.lower() else "csv"
+        return AssistantResponse(
+            thinking="Quick classify: structure data",
+            action_type=action_type.value,
+            message=f"Converting to {fmt}",
+            emoji="📊",
+            structure_data=DataStructuringParams(target_format=fmt)
+        )
+    
+    else:
+        # Default for other quick actions
+        return AssistantResponse(
+            thinking="Quick classify: default action",
+            action_type=action_type.value,
+            message="Processing...",
+            emoji="⚡"
+        )
+
+
 def route_intent(
     command: str,
     clipboard_type: str,
@@ -48,6 +122,12 @@ def route_intent(
     Returns:
         AssistantResponse with action type and parameters
     """
+    # Try quick classification first (bypass LLM for common patterns)
+    quick_action = quick_classify(command)
+    if quick_action:
+        # Build a minimal response for quick-classified actions
+        return _build_quick_response(quick_action, command, clipboard_content)
+    
     # Build the system prompt with context
     clipboard_preview = get_clipboard_preview(clipboard_type, clipboard_content)
     
@@ -138,12 +218,29 @@ def quick_classify(command: str) -> Optional[ActionType]:
     if any(phrase in command_lower for phrase in ["code this", "make this react", "convert to react", "tailwind this", "make this html"]):
         return ActionType.SCREENSHOT_TO_CODE
     
-    # Memory operations
-    if any(phrase in command_lower for phrase in ["remember this", "save this", "store this"]):
+    # Memory: Clear all
+    if any(phrase in command_lower for phrase in ["clear all memory", "clear memory", "delete all memory", "erase memory", "wipe memory"]):
+        return ActionType.CLEAR_MEMORY
+    
+    # Memory: Delete specific
+    if any(phrase in command_lower for phrase in ["delete the", "forget my", "remove from memory", "delete my"]) and "memory" not in command_lower.split()[-2:]:
+        return ActionType.DELETE_MEMORY
+    
+    # Memory: Save - must check BEFORE search
+    if any(phrase in command_lower for phrase in ["remember this", "save this", "store this", "keep this", "save to memory"]):
         return ActionType.SAVE_TO_MEMORY
     
-    if any(phrase in command_lower for phrase in ["where did i save", "find my", "search memory", "recall"]):
+    # Memory: Search - expanded patterns
+    if any(phrase in command_lower for phrase in [
+        "what's my", "what is my", "whats my",
+        "where did i save", "find my", "search memory", "recall",
+        "get my", "show my", "retrieve my", "look up my"
+    ]):
         return ActionType.SEARCH_MEMORY
+    
+    # Data structure
+    if any(phrase in command_lower for phrase in ["convert to json", "convert to csv", "to json", "to csv", "make this json", "make this csv"]):
+        return ActionType.STRUCTURE_DATA
     
     # For everything else, use LLM
     return None
