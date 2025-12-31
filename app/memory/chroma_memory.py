@@ -68,10 +68,18 @@ class ChromaMemory:
         """
         doc_id = str(uuid.uuid4())
         
-        # Build metadata
+        # Get label for searchability
+        label = metadata.get("label", "") if metadata else ""
+        
+        # Prepend label to document for better semantic search matching
+        # This allows searching "github key" to find documents labeled "GitHub key"
+        searchable_doc = f"[{label}] {content}" if label else content
+        
+        # Build metadata - store original content for retrieval
         doc_metadata = {
             "timestamp": datetime.now().isoformat(),
-            "content_preview": content[:100] if len(content) > 100 else content
+            "content_preview": content[:100] if len(content) > 100 else content,
+            "original_content": content  # Store original for clean retrieval
         }
         
         if metadata:
@@ -81,7 +89,7 @@ class ChromaMemory:
             })
         
         self.collection.add(
-            documents=[content],
+            documents=[searchable_doc],
             metadatas=[doc_metadata],
             ids=[doc_id]
         )
@@ -101,16 +109,21 @@ class ChromaMemory:
             n_results: Number of results to return
             
         Returns:
-            List of matching content strings
+            List of matching content strings (original content, not searchable doc)
         """
         try:
             results = self.collection.query(
                 query_texts=[query],
-                n_results=n_results
+                n_results=n_results,
+                include=["documents", "metadatas"]
             )
             
-            if results and results['documents']:
-                return results['documents'][0]
+            if results and results['metadatas'] and results['metadatas'][0]:
+                # Return original_content from metadata (clean, without label prefix)
+                return [
+                    meta.get('original_content', doc)
+                    for meta, doc in zip(results['metadatas'][0], results['documents'][0])
+                ]
             return []
             
         except Exception as e:
