@@ -4,7 +4,7 @@ Defines the structured output format for LLM responses.
 """
 
 from enum import Enum
-from typing import Optional, List, Union
+from typing import Optional, List
 from pydantic import BaseModel, Field
 
 
@@ -127,8 +127,8 @@ class AssistantResponse(BaseModel):
         description="Internal reasoning (not shown to user)"
     )
     
-    action_type: ActionType = Field(
-        description="The action to perform"
+    action_type: str = Field(
+        description="The action to perform. Values: COPY_TEXT_TO_CLIPBOARD, SHORT_REPLY, NO_ACTION, SCREENSHOT_TO_CODE, STRUCTURE_DATA, DEBUG_CODE, REWRITE_TEXT, REMOVE_BACKGROUND, TRANSLATE, SAVE_TO_MEMORY, SEARCH_MEMORY, CLIPBOARD_UTILITY"
     )
     
     message: str = Field(

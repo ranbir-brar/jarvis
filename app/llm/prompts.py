@@ -89,14 +89,26 @@ OUTPUT ONLY THE CODE. No markdown fences, no explanations, no duplicates.
 
 STRUCTURE_DATA_PROMPT = """Convert this data to {target_format} format.
 
-RULES:
-1. Output ONLY the structured data - no explanations
-2. Infer schema from the content (column names, data types)
-3. Never truncate data
-4. For CSV: Include headers, use proper escaping
-5. For JSON: Use consistent keys, proper nesting
-6. For SQL ({sql_dialect}): Use INSERT statements
-7. For Markdown: Use proper table formatting
+CRITICAL REQUIREMENTS:
+1. NEVER truncate - include ALL rows from the input, no exceptions
+2. NEVER modify values - copy numbers and text EXACTLY as they appear
+3. NEVER hallucinate - if a value is "1.94", output "1.94", not something else
+
+PREPROCESSING:
+1. Extract visible text from markdown links: [India](url) -> India
+2. Strip markdown images: [![text](img)](url) -> text  
+3. Remove HTML tags
+4. Clean column headers (remove # prefix, trim whitespace)
+
+OUTPUT FORMAT ({target_format}):
+- CSV: headers first, then each row, proper escaping
+- JSON: array of objects with consistent keys
+- SQL ({sql_dialect}): CREATE TABLE + INSERT statements
+- Markdown: clean table with alignment
+
+VALIDATION:
+- Count input rows and ensure output has the SAME count
+- Verify first and last row values match exactly
 
 INPUT DATA:
 {content}

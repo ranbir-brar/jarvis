@@ -1,6 +1,6 @@
 """
 LLM Provider abstraction for Jarvis.
-Supports Groq and Gemini with instructor for structured outputs.
+Supports Groq, Gemini, and OpenAI with instructor for structured outputs.
 """
 
 from typing import Optional, Any
@@ -25,6 +25,14 @@ def get_gemini_client() -> Any:
     return instructor.from_genai(client, mode=instructor.Mode.GENAI_TOOLS)
 
 
+def get_openai_client() -> Any:
+    """Get an instructor-wrapped OpenAI client."""
+    from openai import OpenAI
+    
+    client = OpenAI(api_key=config.OPENAI_API_KEY)
+    return instructor.from_openai(client)
+
+
 def get_llm_client() -> Any:
     """
     Get the appropriate LLM client based on configuration.
@@ -36,6 +44,8 @@ def get_llm_client() -> Any:
         return get_groq_client()
     elif config.MODEL_PROVIDER == "gemini":
         return get_gemini_client()
+    elif config.MODEL_PROVIDER == "openai":
+        return get_openai_client()
     else:
         raise ValueError(f"Unknown provider: {config.MODEL_PROVIDER}")
 
@@ -46,6 +56,8 @@ def get_model_name() -> str:
         return config.GROQ_MODEL
     elif config.MODEL_PROVIDER == "gemini":
         return config.GEMINI_MODEL
+    elif config.MODEL_PROVIDER == "openai":
+        return config.OPENAI_MODEL
     else:
         raise ValueError(f"Unknown provider: {config.MODEL_PROVIDER}")
 

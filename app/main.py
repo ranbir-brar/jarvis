@@ -153,7 +153,7 @@ class Jarvis:
                 clipboard_content=clipboard_content,
                 memory_context=memory_context
             )
-            print(f"🎯 Action: {response.action_type.value if response else 'None'}")
+            print(f"🎯 Action: {response.action_type if response else 'None'}")
             
             print("⚡ Executing...")
             success, message = execute_action(

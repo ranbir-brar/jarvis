@@ -24,6 +24,7 @@ class Config:
     # Model names
     GROQ_MODEL: str = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
     GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o")
     GROQ_WHISPER_MODEL: str = os.getenv("GROQ_WHISPER_MODEL", "whisper-large-v3-turbo")
     
     # Feature Flags
@@ -51,8 +52,11 @@ class Config:
         if cls.MODEL_PROVIDER == "gemini" and not cls.GEMINI_API_KEY:
             errors.append("GEMINI_API_KEY is required when MODEL_PROVIDER=gemini")
         
-        if cls.MODEL_PROVIDER not in ("groq", "gemini"):
-            errors.append(f"MODEL_PROVIDER must be 'groq' or 'gemini', got '{cls.MODEL_PROVIDER}'")
+        if cls.MODEL_PROVIDER == "openai" and not cls.OPENAI_API_KEY:
+            errors.append("OPENAI_API_KEY is required when MODEL_PROVIDER=openai")
+        
+        if cls.MODEL_PROVIDER not in ("groq", "gemini", "openai"):
+            errors.append(f"MODEL_PROVIDER must be 'groq', 'gemini', or 'openai', got '{cls.MODEL_PROVIDER}'")
         
         return errors
 
