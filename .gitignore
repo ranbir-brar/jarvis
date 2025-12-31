@@ -71,3 +71,6 @@ htmlcov/
 # pyinstaller build artifacts
 build/
 dist/
+
+# Demo folder
+demo/
