@@ -31,6 +31,7 @@ Jarvis understands your intent and the content on your clipboard (text or image)
 
 - **Quick Tools**: "Trim whitespace", "Dedupe lines", "Extract emails", "Extract URLs", "Prettify JSON", "Slugify".
 - **Arithmetic**: "What's 15 \* 23?" → Calculates and copies result to clipboard.
+- **Synonyms**: Copy a word → "What's a synonym for this?" → Copies synonyms to clipboard.
 
 ## Quick Start
 

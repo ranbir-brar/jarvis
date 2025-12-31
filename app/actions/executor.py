@@ -68,6 +68,9 @@ def execute_action(
         elif action_type == ActionType.CALCULATE:
             return _handle_calculate(response)
         
+        elif action_type == ActionType.SYNONYM:
+            return _handle_synonym(response, clipboard_content)
+        
         else:
             notify_error(f"Unknown action: {action_type}")
             return False, f"Unknown action type: {action_type}"
@@ -461,3 +464,25 @@ def _handle_calculate(response: AssistantResponse) -> Tuple[bool, str]:
     else:
         notify_error("No calculation result")
         return False, "No calculation result provided"
+
+
+def _handle_synonym(
+    response: AssistantResponse,
+    clipboard_content: Union[str, Image.Image, None]
+) -> Tuple[bool, str]:
+    """Handle SYNONYM action - find synonyms for clipboard word and copy to clipboard."""
+    # The LLM should put synonyms in response.content
+    result = response.content
+    
+    if result:
+        success = copy_text_to_clipboard(str(result))
+        if success:
+            word = str(clipboard_content)[:20] if clipboard_content else "word"
+            notify_success(f"Synonyms for {word}")
+            return True, f"Found synonyms: {result}"
+        else:
+            notify_error("Failed to copy")
+            return False, "Failed to copy synonyms"
+    else:
+        notify_error("No synonyms found")
+        return False, "No synonyms found"

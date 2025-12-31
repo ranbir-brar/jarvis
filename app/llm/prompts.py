@@ -40,6 +40,7 @@ DATA ACTIONS:
 UTILITIES:
 - CLIPBOARD_UTILITY: trim, dedupe, sort, extract_emails, extract_urls
 - CALCULATE: Math calculations (e.g., "what's 15 * 23?" → compute and put result in content)
+- SYNONYM: Find synonyms for clipboard word (e.g., "synonym for this word" → put synonyms in content)
 - COPY_TEXT_TO_CLIPBOARD: Generate new content for clipboard
 - SHORT_REPLY: Just respond verbally, no action needed
 - NO_ACTION: Nothing to do
@@ -50,7 +51,8 @@ CRITICAL RULES:
 3. For SAVE_TO_MEMORY: set memory.label to the label (e.g., "API key")
 4. For SEARCH_MEMORY: set memory.query to what user is looking for
 5. For CALCULATE: compute the result and put it in the content field
-6. Message must be ≤50 chars
+6. For SYNONYM: put synonyms (comma-separated) in the content field
+7. Message must be ≤50 chars
 """
 
 
