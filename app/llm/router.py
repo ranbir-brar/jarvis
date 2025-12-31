@@ -54,7 +54,7 @@ def _build_quick_response(
             action_type=action_type.value,
             message=f"Saving as {label or 'note'}",
             emoji="💾",
-            memory=MemoryParams(label=label, category="important_info")
+            memory=MemoryParams(operation="save", label=label, category="important_info")
         )
     
     elif action_type == ActionType.SEARCH_MEMORY:
@@ -63,7 +63,7 @@ def _build_quick_response(
             action_type=action_type.value,
             message=f"Searching for {query}",
             emoji="🔍",
-            memory=MemoryParams(query=query)
+            memory=MemoryParams(operation="search", query=query)
         )
     
     elif action_type == ActionType.DELETE_MEMORY:
@@ -72,7 +72,7 @@ def _build_quick_response(
             action_type=action_type.value,
             message=f"Deleting {query}",
             emoji="🗑️",
-            memory=MemoryParams(query=query)
+            memory=MemoryParams(operation="delete", query=query)
         )
     
     elif action_type == ActionType.CLEAR_MEMORY:
@@ -80,7 +80,8 @@ def _build_quick_response(
             thinking="Quick classify: clear all memory",
             action_type=action_type.value,
             message="Clearing all memory",
-            emoji="🧹"
+            emoji="🧹",
+            memory=MemoryParams(operation="clear")
         )
     
     elif action_type == ActionType.STRUCTURE_DATA:
