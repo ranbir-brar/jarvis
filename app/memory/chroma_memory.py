@@ -213,6 +213,8 @@ class ChromaMemory:
             # Delete and recreate collection
             self.client.delete_collection("jarvis_memory")
             self._collection = None
+            # Immediate recreation to ensure readiness
+            self.get_or_create_collection()
             return True
         except Exception as e:
             print(f"Error clearing memory: {e}")
