@@ -74,3 +74,7 @@ dist/
 
 # Demo folder
 demo/
+jarvis-demo/
+
+#env
+.env
